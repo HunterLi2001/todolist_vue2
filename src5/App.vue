@@ -3,13 +3,14 @@
     <div class="todo-container">
       <div class="todo-wrap">
         <MyHeader @addTodo="addTodo"/>
-        <MyList :todos="todos" :checkTodo="checkTodo" :deleteTodo="deleteTodo"/>
+        <MyList :todos="todos"/>
         <MyFooter :todos="todos" @checkAllTodo="checkAllTodo" @clearAllTodo="clearAllTodo"/>
       </div>
     </div>
   </div>
 </template>
 <script>
+import pubsub from "pubsub-js";
 import MyHeader from "@/components/MyHeader";
 import MyFooter from "@/components/MyFooter";
 import MyList from "@/components/MyList";
@@ -33,7 +34,7 @@ export default {
         if (todo.id === id) todo.done = !todo.done;
       });
     },
-    deleteTodo(id) {
+    deleteTodo(_, id) {
       this.todos = this.todos.filter((todo) => {
         return todo.id !== id;
       });
@@ -49,6 +50,14 @@ export default {
         return !todo.done;
       });
     }
+  },
+  mounted() {
+    this.$bus.$on("checkTodo", this.checkTodo);
+    this.pubId = pubsub.subscribe("deleteTodo", this.deleteTodo);
+  },
+  beforeDestroy() {
+    this.$bus.$off("checkTodo");
+    pubsub.unsubscribe(this.pubId);
   },
   watch: {
     todos: {
